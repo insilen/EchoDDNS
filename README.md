@@ -106,7 +106,7 @@ SubDomain中查询 a.dns.example.com
 他们分别对应上面的3个a.dns.example.com
 
 然后作出Docker compose 环境配置:
-````
+```
 - "ACCESSKEY_ID=xxxxxxxx"
 - "ACCESSKEY_SECRET=xxxxxxxxxxxxxxxxxxx" 
 - "DOMAIN_NAME=example.com"

@@ -80,6 +80,7 @@ def update_arecord(record_id, a_domain, new_ip):
         request.set_RecordId(record_id)
         request.set_RR(a_domain)
         request.set_Type('A')
+        #request.set_TTL(60)  #TTL时间  默认600
         request.set_Value(new_ip)
         # 发送请求并打印响应
         response = client.do_action_with_exception(request)

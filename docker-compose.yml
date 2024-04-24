@@ -1,0 +1,30 @@
+---
+services:
+  aliddns:
+    image: aliddns:latest
+    container_name: aliddns
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 128M
+        reservations:
+          cpus: '0.1'
+          memory: 64M
+    environment:
+       - "ACCESSKEY_ID=<HIDE>"
+       - "ACCESSKEY_SECRET=<HIDE>"
+       - "DOMAIN_NAME=vas.ink"
+       - "DDNS1_DOMAIN=dns1.vas.ink"
+       - "DDNS2_DOMAIN=dns2.vas.ink"
+       - "A_DOMAIN=a.dns.vas.ink"
+       - "A_RecordId1=123"
+       - "A_RecordId2=123"
+    # 控制日志数量
+    logging:
+       driver: "json-file"
+       options:
+          max-size: "200k"
+          max-file: "10"
+          max-buffer-size: "1000"
+    restart: always

@@ -25,6 +25,7 @@ services:
        driver: "json-file"
        options:
           max-size: "200k"
+          mode: "non-blocking"
           max-file: "10"
           max-buffer-size: "1000"
     restart: always

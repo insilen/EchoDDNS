@@ -27,4 +27,4 @@ RUN chmod +x supercronic-linux-amd64 \
 RUN echo "* * * * * python /app/alidns.py 2>&1" > /etc/crontab
 
 # 使用supercronic运行crontab
-CMD ["/usr/local/bin/supercronic", "-silent", "-passthrough", "/etc/crontab"]
+CMD ["/usr/local/bin/supercronic", "-quiet", "-passthrough-logs", "/etc/crontab"]

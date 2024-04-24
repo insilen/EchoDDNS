@@ -18,6 +18,7 @@ service_loctaion = os.getenv('SERVICE_LOCATION', 'cn-chengdu')        #  阿里�
 domain_name = os.getenv('DOMAIN_NAME')                                #  主域名
 query_mode = os.getenv('QUERY_MODE', 'SDK')                           #  运行模式SDK 或 DNS
 query_dns = os.getenv('QUERY_DNS', '223.5.5.5,223.6.6.6').split(',')  #  运行模式为 DNS 时候可自定义
+domain_ttl = os.getenv('DOMAIN_TTL', 600)                             #  A解析域名TTL 默认600
 sub_domains = [os.getenv(f'DDNS{i}_DOMAIN') for i in range(1, 4) if os.getenv(f'DDNS{i}_DOMAIN')]   # 获取DDNS域名
 a_domain = os.getenv('A_DOMAIN')                                      # 获取主域名
 
@@ -80,7 +81,7 @@ def update_arecord(record_id, a_domain, new_ip):
         request.set_RecordId(record_id)
         request.set_RR(a_domain)
         request.set_Type('A')
-        #request.set_TTL(60)  #TTL时间  默认600
+        request.set_TTL(domain_ttl)  #TTL时间  默认600
         request.set_Value(new_ip)
         # 发送请求并打印响应
         response = client.do_action_with_exception(request)

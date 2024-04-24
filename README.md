@@ -63,61 +63,61 @@ Address: 183.2.172.185
 
 
 ## 快速开始
-###  运行条件
 
-- 在阿里云帐户中获取您的 [凭证](https://usercenter.console.aliyun.com/#/manage/ak)
-  设置环境变量的 ACCESS_KEY_ID 以及 ACCESS_KEY_SECRET;
-
-- 按要求设置域名
-
-#### 打包方法
-首先，你需要安装PyInstaller。你可以使用pip进行安装：
-pip install pyinstaller
-
-然后，你可以使用下面的命令将你的python脚本（例如main.py）打包为一个独立的可执行文件：
-   pyinstaller --onefile --hidden-import=queue main.py
-
-dockerfile
+使用Docker Compose直接运行，配置的环境变量如下
 ```
-# 使用Alpine作为基础镜像
-FROM python:3-alpine
-
-# 安装supercronic
-RUN sed -i 's#https://dl-cdn.alpinelinux.org#https://mirrors.tuna.tsinghua.edu.cn#g' /etc/apk/repositories
-   
-# 设置工作目录
-WORKDIR /app
-
-# 安装Python依赖
-RUN pip install aliyun-python-sdk-core-v3 -i https://pypi.tuna.tsinghua.edu.cn/simple \
-    && pip install aliyun-python-sdk-alidns -i https://pypi.tuna.tsinghua.edu.cn/simple 
-
-# 拷贝您的源代码到工作目录
-COPY alidns.py ./alidns.py
-
-# 在这里下载 https://github.com/aptible/supercronic/releases
-COPY supercronic-linux-amd64 ./supercronic-linux-amd64
-
-RUN chmod +x supercronic-linux-amd64 \
-    && mv supercronic-linux-amd64 /usr/local/bin/supercronic
-
-# 创建一个crontab文件
-RUN echo "* * * * * python /app/alidns.py >> /var/log/cron.log 2>&1" > /etc/crontab
-
-# 使用supercronic运行crontab
-CMD ["/usr/local/bin/supercronic", "/etc/crontab"]
+- "ACCESSKEY_ID=<HIDE>"        # 阿里云 AK 访问https://ram.console.aliyun.com/users/ 创建用户并授AliyunDNSFullAccess权限
+- "ACCESSKEY_SECRET=<HIDE>"    # 阿里云 AK
+- "DOMAIN_TTL=60"              # 高可用解析 TTL 不添加此行则为600 可选60,120,600,1800,3600,36000,86400
+- "DOMAIN_NAME=example.com"         # 需要操作的主域名
+- "DDNS1_DOMAIN=dns1.example.com"   # DDNS域名1(源)
+- "DDNS2_DOMAIN=dns2.example.com"   # DDNS域名2(源)
+- "A_DOMAIN=a.dns.example.com"      # 所有DDNS IP 最终解析的简单高可用域名
+- "A_RecordId1=1234"           # 最终解析的域名的RecordId 访问https://next.api.aliyun.com/api/Alidns/2015-01-09/DescribeSubDomainRecords 查询获取
+- "A_RecordId2=1235"           
 ```
 
+注意其中的 DOMAIN_TTL 如果你没有购买企业版DNS TTL 1分钟版本，那么建议直接删除`- "DOMAIN_TTL=60"` 整行配置，就会使用默认的600（10分钟）参数
 
+配置例子:
 
-## 贡献指南
-(在这一部分，您可以说明如何为项目贡献代码，包括代码提交规范、测试要求等。)
+主域名: example.com
+DDNSIP数量: 3个 IP:10.0.0.10  10.0.0.20  10.0.0.30
+DDNS1域名: dns1.example.com 10.0.0.10
+DDNS2域名: dns2.example.com 10.0.0.20
+DDNS3域名: dns3.example.com 10.0.0.30
+假设以上部分已经从你的网关或路由中实现了功能，那么久能顺利的利用本项目来继续实现：
 
+域名解析后台建立3个简单高可用域名:
+a.dns.example.com 1.1.1.1
+a.dns.example.com 2.2.2.2
+a.dns.example.com 3.3.3.3
+域名为同一个，但解析到不同的临时IP上。
 
-## 许可证
-(在这一部分，您可以指出项目采用的许可证类型。)
+然后访问 https://next.api.aliyun.com/api/Alidns/2015-01-09/DescribeSubDomainRecords
 
+SubDomain中查询 a.dns.example.com 
 
-## 联系方式
-(在这一部分，您可以提供项目维护者的联系方式，方便用户反馈问题或建议。)
-以上内容只是一个大致框架，具体的安装使用说明和贡献指南需要根据您项目的实际情况来编写。希望这个README模板对您的项目有所帮助！
+在调用结果中可以看到3段json，记录他们的RecordId：1455682456000096,1455680456002021,1455682456000291
+他们分别对应上面的3个a.dns.example.com
+
+然后作出Docker compose 环境配置:
+````
+- "ACCESSKEY_ID=xxxxxxxx"
+- "ACCESSKEY_SECRET=xxxxxxxxxxxxxxxxxxx" 
+- "DOMAIN_NAME=example.com"
+- "DDNS1_DOMAIN=dns1.example.com" 
+- "DDNS2_DOMAIN=dns2.example.com"
+- "DDNS3_DOMAIN=dns3.example.com"
+- "A_DOMAIN=a.dns.example.com"
+- "A_RecordId1=1455682456000096"
+- "A_RecordId2=1455680456002021"
+- "A_RecordId3=1455682456000291"     
+```
+
+上述例子运行后 则会得到下面结果
+```
+a.dns.example.com 10.0.0.10
+a.dns.example.com 10.0.0.20
+a.dns.example.com 10.0.0.30
+```

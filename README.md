@@ -80,25 +80,29 @@ Address: 183.2.172.185
 注意其中的 DOMAIN_TTL 如果你没有购买企业版DNS TTL 1分钟版本，那么建议直接删除`- "DOMAIN_TTL=60"` 整行配置，就会使用默认的600（10分钟）参数
 
 配置例子:
-
+```
 主域名: example.com
 DDNSIP数量: 3个 IP:10.0.0.10  10.0.0.20  10.0.0.30
 DDNS1域名: dns1.example.com 10.0.0.10
 DDNS2域名: dns2.example.com 10.0.0.20
 DDNS3域名: dns3.example.com 10.0.0.30
+```
 假设以上部分已经从你的网关或路由中实现了功能，那么久能顺利的利用本项目来继续实现：
 
+
 域名解析后台建立3个简单高可用域名:
+```
 a.dns.example.com 1.1.1.1
 a.dns.example.com 2.2.2.2
 a.dns.example.com 3.3.3.3
+```
 域名为同一个，但解析到不同的临时IP上。
 
 然后访问 https://next.api.aliyun.com/api/Alidns/2015-01-09/DescribeSubDomainRecords
-
+ 
 SubDomain中查询 a.dns.example.com 
 
-在调用结果中可以看到3段json，记录他们的RecordId：1455682456000096,1455680456002021,1455682456000291
+在调用结果中可以看到3段json，记录他们的RecordId：`1455682456000096`,`1455680456002021`,`1455682456000291`
 他们分别对应上面的3个a.dns.example.com
 
 然后作出Docker compose 环境配置:

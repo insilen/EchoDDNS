@@ -7,6 +7,10 @@ WORKDIR /build
 
 # 安装依赖
 RUN sed -i 's#https://dl-cdn.alpinelinux.org#https://mirrors.tuna.tsinghua.edu.cn#g' /etc/apk/repositories
+
+# 安装PyInstaller和所需的依赖
+RUN apk add --no-cache build-base libffi-dev binutils
+
 RUN pip install --no-cache-dir aliyun-python-sdk-core-v3 aliyun-python-sdk-alidns pyinstaller -i https://pypi.tuna.tsinghua.edu.cn/simple
 
 # 拷贝源代码

@@ -34,7 +34,7 @@ COPY supercronic-linux-amd64 /usr/local/bin/supercronic
 RUN chmod +x /usr/local/bin/supercronic && chmod +x /app/
 
 # 创建一个crontab文件
-RUN echo "* * * * * root ./alidns 2>&1" > /etc/crontab/alidns
+RUN echo "* * * * * root ./alidns 2>&1" > /etc/cron.d/alidns
 
 # 使用supercronic运行crontab
 CMD ["/usr/local/bin/supercronic", "-quiet", "-passthrough-logs", "/etc/crontab"]

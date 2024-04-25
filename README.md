@@ -127,7 +127,7 @@ a.dns.example.com 10.0.0.30
 ```
 
 
-### Dockerfile 构架指南
+### Dockerfile 构建指南
 ```
 # 使用名为all-builder的构建器实例
 docker buildx create --name all-builder --use
@@ -137,10 +137,6 @@ docker buildx inspect all-builder --bootstrap
 
 # 构建的架构
 docker buildx build --platform linux/amd64,linux/arm64 -t insilen/aliddnstoa:latest --push .
-
-docker buildx build --platform linux/amd64,linux/arm64,linux/arm/v7 -t insilen/aliddnstoa:latest --push .
-
-# 目前已知linux/arm/v7平台构建镜像 会出错，下一步转二进制执行兼容全平台
 ```
 
 

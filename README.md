@@ -138,5 +138,27 @@ docker buildx inspect all-builder --bootstrap
 # 构建的架构
 docker buildx build --platform linux/amd64,linux/arm64 -t insilen/aliddnstoa:latest --push .
 
+docker buildx build --platform linux/amd64,linux/arm64,linux/arm/v7 -t insilen/aliddnstoa:latest --push .
+
 # 目前已知linux/arm/v7平台构建镜像 会出错，下一步转二进制执行兼容全平台
+```
+
+
+### 开发
+
+开发环境使用虚拟环境
+```
+   # 创建虚拟环境，"env"是虚拟环境的名字，您可以自定义
+   python3 -m venv env
+
+   # 在Windows上激活虚拟环境
+   .\env\Scripts\activate
+
+   # 在Unix或MacOS上激活虚拟环境
+   source env/bin/activate
+
+   # 现在您的命令行提示符应该显示了虚拟环境的名字
+
+   # 退出虚拟环境
+   deactivate
 ```

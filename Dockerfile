@@ -1,9 +1,6 @@
 # 使用Alpine作为基础镜像
 FROM python:3-alpine
 
-# 安装supercronic
-RUN sed -i 's#https://dl-cdn.alpinelinux.org#https://mirrors.tuna.tsinghua.edu.cn#g' /etc/apk/repositories
-   
 # 设置工作目录
 WORKDIR /app
 
@@ -11,17 +8,17 @@ WORKDIR /app
 ENV CRON_LOG_LEVEL=error
 
 # 安装Python依赖
-RUN pip install aliyun-python-sdk-core-v3 -i https://pypi.tuna.tsinghua.edu.cn/simple \
-    && pip install aliyun-python-sdk-alidns -i https://pypi.tuna.tsinghua.edu.cn/simple 
+# 合并安装命令，并清理pip缓存
+RUN sed -i 's#https://dl-cdn.alpinelinux.org#https://mirrors.tuna.tsinghua.edu.cn#g' /etc/apk/repositories && \
+    pip install --no-cache-dir aliyun-python-sdk-core-v3 aliyun-python-sdk-alidns -i https://pypi.tuna.tsinghua.edu.cn/simple
 
 # 拷源代码到工作目录
 COPY alidns.py ./alidns.py
 
 # 在这里下载 https://github.com/aptible/supercronic/releases
-COPY supercronic-linux-amd64 ./supercronic-linux-amd64
-
-RUN chmod +x supercronic-linux-amd64 \
-    && mv supercronic-linux-amd64 /usr/local/bin/supercronic
+# 使用ADD命令直接下载supercronic，并赋予执行权限
+COPY supercronic-linux-amd64 /usr/local/bin/supercronic
+RUN chmod +x /usr/local/bin/supercronic
 
 # 创建一个crontab文件
 RUN echo "* * * * * python /app/alidns.py 2>&1" > /etc/crontab

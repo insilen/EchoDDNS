@@ -162,7 +162,7 @@ docker buildx build --platform linux/amd64,linux/arm64,linux/arm/v7 -t insilen/a
    pip install aliyun-python-sdk-core-v3 aliyun-python-sdk-alidns pyinstaller -i https://pypi.tuna.tsinghua.edu.cn/simple
 
    # 编译成二进制
-   pyinstaller --onefile alidns.py
+   pyinstaller --onefile --add-data alidns.py
 
    # 退出虚拟环境
    deactivate

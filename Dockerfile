@@ -26,7 +26,7 @@ WORKDIR /app
 COPY --from=builder /build/dist/alidns .
 
 # 安装glibc库和cron
-RUN sed -i 's#https://deb.debian.org#https://mirrors.tuna.tsinghua.edu.cn#g' /etc/apt/sources.list
+RUN sed -i 's#http://deb.debian.org#http://mirrors.tuna.tsinghua.edu.cn#g' /etc/apt/sources.list
 RUN apt-get update && apt-get install -y libc6 cron && rm -rf /var/lib/apt/lists/*
 
 # 拷贝supercronic到容器中，并赋予执行权限

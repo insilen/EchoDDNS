@@ -1,5 +1,6 @@
 import os
 import re
+import queue
 import json
 import logging
 from aliyunsdkcore.client import AcsClient

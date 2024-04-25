@@ -158,6 +158,11 @@ docker buildx build --platform linux/amd64,linux/arm64,linux/arm/v7 -t insilen/a
    source env/bin/activate
 
    # 现在您的命令行提示符应该显示了虚拟环境的名字
+   # 安装环境
+   pip install aliyun-python-sdk-core-v3 aliyun-python-sdk-alidns pyinstaller -i https://pypi.tuna.tsinghua.edu.cn/simple
+
+   # 编译成二进制
+   pyinstaller --onefile alidns.py
 
    # 退出虚拟环境
    deactivate

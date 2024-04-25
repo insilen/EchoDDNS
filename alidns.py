@@ -1,6 +1,7 @@
 import os
 import re
 import queue
+import sys
 import json
 import logging
 from aliyunsdkcore.client import AcsClient
@@ -14,6 +15,9 @@ from aliyunsdkalidns.request.v20150109.DescribeDomainRecordInfoRequest import De
 ## pip install aliyun-python-sdk-alidns -i https://pypi.tuna.tsinghua.edu.cn/simple
 ## pip install pyinstaller  -i https://pypi.tuna.tsinghua.edu.cn/simple
 
+# 设置日志格式和日期格式
+logging.basicConfig(level=logging.INFO, format='[%(asctime)s] %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+
 # 环境变量读取
 accesskey_id = os.getenv('ACCESSKEY_ID')                              #  阿里云 AK
 accesskey_secret = os.getenv('ACCESSKEY_SECRET')                      #  阿里云 AK
@@ -25,11 +29,45 @@ domain_ttl = os.getenv('DOMAIN_TTL', 600)                             #  A解析
 sub_domains = [os.getenv(f'DDNS{i}_DOMAIN') for i in range(1, 4) if os.getenv(f'DDNS{i}_DOMAIN')]   # 获取DDNS域名
 a_domain = os.getenv('A_DOMAIN')                                      # 获取主域名
 
+# 参数检测
+# 必需的参数列表
+required_params = {
+    'ACCESSKEY_ID': accesskey_id,
+    'ACCESSKEY_SECRET': accesskey_secret,
+    'DOMAIN_NAME': domain_name,
+    'A_DOMAIN': a_domain,
+}
+
+# 检查基本必需的参数是否提供
+missing_params = [key for key, value in required_params.items() if value is None]
+
+# 检查DDNS和A_RecordId配对
+ddns_provided = False
+for i in range(1, 4):
+    ddns = os.getenv(f'DDNS{i}_DOMAIN')
+    record_id = os.getenv(f'A_RecordId{i}')
+    if ddns or record_id:
+        if not ddns:
+            missing_params.append(f'DDNS{i}_DOMAIN')
+        if not record_id:
+            missing_params.append(f'A_RecordId{i}')
+        if ddns and record_id:
+            ddns_provided = True
+
+# 至少需要提供一组DDNS_DOMAIN和A_RecordId
+if not ddns_provided:
+    missing_params.append('[🚫] 至少要提供一组 DDNS_DOMAIN 和 A_RecordId')
+
+# 检查是否有缺失的参数
+if missing_params:
+    logging.info("[🚫] Error: 请检查环境变量 缺少必需的参数:")
+    for param in missing_params:
+        print(f" - {param}")
+    sys.exit(1)
+
+
 # 初始化客户端
 client = AcsClient(accesskey_id, accesskey_secret, service_loctaion)
-
-# 设置日志格式和日期格式
-logging.basicConfig(level=logging.INFO, format='[%(asctime)s] %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
 
 # AliyunDNS SDK只需要域名前缀的问题 域名解析前缀
 def get_subdomain(domain_name, ddns_domains):

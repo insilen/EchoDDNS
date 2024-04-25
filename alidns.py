@@ -107,7 +107,7 @@ def main():
             else:
                 logging.info(f"[🚫] 未找到子域的RecordId记录: {rr_domain}")
         else:
-            logging.info(f"[⛔️] 无法获取子域的IP: {rr_domain}")
+            logging.info(f"[🚫] 无法获取子域的IP: {rr_domain}")
 
 if __name__ == '__main__':
     main()

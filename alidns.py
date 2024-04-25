@@ -1,6 +1,7 @@
 import os
 import re
 import json
+import logging
 from aliyunsdkcore.client import AcsClient
 from aliyunsdkalidns.request.v20150109.DescribeDomainRecordsRequest import DescribeDomainRecordsRequest
 from aliyunsdkalidns.request.v20150109.UpdateDomainRecordRequest import UpdateDomainRecordRequest
@@ -24,6 +25,9 @@ a_domain = os.getenv('A_DOMAIN')                                      # 获取�
 
 # 初始化客户端
 client = AcsClient(accesskey_id, accesskey_secret, service_loctaion)
+
+# 设置日志格式和日期格式
+logging.basicConfig(level=logging.INFO, format='[%(asctime)s] %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
 
 # AliyunDNS SDK只需要域名前缀的问题 域名解析前缀
 def get_subdomain(domain_name, ddns_domains):
@@ -85,9 +89,9 @@ def update_arecord(record_id, a_domain, new_ip):
         request.set_Value(new_ip)
         # 发送请求并打印响应
         response = client.do_action_with_exception(request)
-        print(f"Updated A record for {rr_domain} to IP: {new_ip}")
+        logging.info(f"[📥] 发现并更新了子域名 {rr_domain} 的新IP: {new_ip}")
     else:
-        print(f"No change in IP for {rr_domain}. No update required.")
+        logging.info(f"[💤] 例行查询子域名 {rr_domain}. IP没有变动 程序自动跳过")
 
 def main():
     global rr_domain
@@ -101,9 +105,9 @@ def main():
             if record_id:
                 update_arecord(record_id, a_domain, ip)
             else:
-                print(f"No record ID found for subdomain: {rr_domain}")
+                logging.info(f"[🚫] 未找到子域的RecordId记录: {rr_domain}")
         else:
-            print(f"Failed to get IP for subdomain: {rr_domain}")
+            logging.info(f"无法获取子域的IP: {rr_domain}")
 
 if __name__ == '__main__':
     main()

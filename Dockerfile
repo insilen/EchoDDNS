@@ -14,7 +14,7 @@ ENV CRON_LOG_LEVEL=error
 RUN pip install aliyun-python-sdk-core-v3 -i https://pypi.tuna.tsinghua.edu.cn/simple \
     && pip install aliyun-python-sdk-alidns -i https://pypi.tuna.tsinghua.edu.cn/simple 
 
-# 拷贝您的源代码到工作目录
+# 拷源代码到工作目录
 COPY alidns.py ./alidns.py
 
 # 在这里下载 https://github.com/aptible/supercronic/releases

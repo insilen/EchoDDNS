@@ -8,9 +8,10 @@ WORKDIR /app
 ENV CRON_LOG_LEVEL=error
 
 # 安装Python依赖
+# RUN sed -i 's#https://dl-cdn.alpinelinux.org#https://mirrors.tuna.tsinghua.edu.cn#g' /etc/apk/repositories
+
 # 合并安装命令，并清理pip缓存
-RUN sed -i 's#https://dl-cdn.alpinelinux.org#https://mirrors.tuna.tsinghua.edu.cn#g' /etc/apk/repositories && \
-    pip install --no-cache-dir aliyun-python-sdk-core-v3 aliyun-python-sdk-alidns -i https://pypi.tuna.tsinghua.edu.cn/simple
+RUN pip install --no-cache-dir aliyun-python-sdk-core-v3 aliyun-python-sdk-alidns -i https://pypi.tuna.tsinghua.edu.cn/simple
 
 # 拷源代码到工作目录
 COPY alidns.py ./alidns.py

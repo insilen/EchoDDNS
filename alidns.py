@@ -9,7 +9,7 @@ from aliyunsdkalidns.request.v20150109.DescribeDomainRecordInfoRequest import De
 pip install pyinstaller
 
 # 环境安装
-## pip install aliyun-python-sdk-core-v3 -i https://pypi.tuna.tsinghua.edu.cn/simple
+## pip install aliyun-python-sdk-core-v3 aliyun-python-sdk-alidns pyinstaller -i https://pypi.tuna.tsinghua.edu.cn/simple
 ## pip install aliyun-python-sdk-alidns -i https://pypi.tuna.tsinghua.edu.cn/simple
 ## pip install pyinstaller  -i https://pypi.tuna.tsinghua.edu.cn/simple
 

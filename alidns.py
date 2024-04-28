@@ -153,8 +153,26 @@ aips_dict = get_record_ids_ips(record_ids)
 print(aips_dict)
 
  
+def find_mismatched_ips(ddnsips_dict, aips_dict):
+    # 将ddnsips_dict中的IP提取出来并排序形成列表
+    sorted_ddns_ips = sorted(ddnsips_dict.values())
+    
+    # 存储不匹配的RecordId和对应的源IP
+    mismatched_ips = {}
+    
+    for record_id, ip in aips_dict.items():
+        # 如果aips_dict中的IP不在ddnsips_dict中，则记录为不匹配
+        if ip not in ddnsips_dict.values():
+            # 选择ddnsips_dict中的第一个不在aips_dict中的IP作为源IP
+            source_ip = next((ddns_ip for ddns_ip in sorted_ddns_ips if ddns_ip not in aips_dict.values()), None)
+            if source_ip:
+                mismatched_ips[record_id] = source_ip
+            
+    return mismatched_ips
 
-
+# 打印输出结果
+mismatched_ips_output = find_mismatched_ips(ddnsips_dict, aips_dict)
+print(mismatched_ips_output)
 
 
 def update_arecord(record_id, a_domain, new_ip):

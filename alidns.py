@@ -3,6 +3,7 @@ import re
 import queue
 import sys
 import json
+import random
 import logging
 from aliyunsdkcore.client import AcsClient
 from aliyunsdkalidns.request.v20150109.DescribeDomainRecordsRequest import DescribeDomainRecordsRequest
@@ -92,31 +93,76 @@ def get_subdomain(domain_name, ddns_domains):
 # 通过上方前缀解析 切换到需要的前缀类型RR
 rr_domain = get_subdomain(domain_name, sub_domains)
 a_domain = get_subdomain(domain_name, a_domain)
-#print(a_domain)
+#print(rr_domain)
  
-# 解析对应表 字典
-record_ids = {rr_domain: os.getenv(f'A_RecordId{i}') for i, rr_domain in enumerate(rr_domain, 1)}
+# A_RecordId 字典
+record_ids = {key: value for key, value in os.environ.items() if key.startswith('A_RecordId')}
+#print(record_ids)
 
 # 从SDK中获取IP的方法
-def getip_sdk(rr_domain):
-    request = DescribeDomainRecordsRequest()
-    request.set_DomainName(domain_name)
-    request.set_TypeKeyWord('A')
-    request.set_RRKeyWord(rr_domain)  # 使用RR值进行查询
-    response = client.do_action_with_exception(request)
-    records = json.loads(response)
-    #print(f"SDK Response for {rr_domain}: {records}")  # 调试打印
-    for record in records['DomainRecords']['Record']:
-        if record['RR'] == rr_domain:
-            #print(f"IP found for {rr_domain}: {record['Value']}")  # 调试打印
-            return record['Value']
-    return None
+def getips_sdk(rr_domains):
+    """
+    获取多个域名前缀对应的IP地址。
+    :param rr_domains: 域名前缀列表
+    :return: 一个字典，键为域名前缀，值为对应的IP地址
+    """
+    ips_dict = {}
+    for rr_domain in rr_domains:
+        request = DescribeDomainRecordsRequest()
+        request.set_DomainName(domain_name)
+        request.set_TypeKeyWord('A')
+        request.set_RRKeyWord(rr_domain)  # 使用RR值进行查询
+        response = client.do_action_with_exception(request)
+        records = json.loads(response)
+        # print(f"SDK Response for {rr_domain}: {records}")  # 调试打印
+        for record in records['DomainRecords']['Record']:
+            if record['RR'] == rr_domain:
+                # print(f"IP found for {rr_domain}: {record['Value']}")  # 调试打印
+                ips_dict[rr_domain] = record['Value']
+                break  # 找到匹配的记录后，跳出循环
+        if rr_domain not in ips_dict:
+            logging.info(f"[🚫] 未找到DDNS子域的相关记录: {rr_domain}")
+            ips_dict[rr_domain] = None  # 如果未找到记录，设置为 None   
+    return ips_dict
+
+ddnsips_dict = getips_sdk(rr_domain)
+print(ddnsips_dict)
+
+
+def get_record_ids_ips(record_ids):
+    """
+    查询 record_ids 中 RecordId 值对应的 A 记录 IP。
+    
+    :param record_ids: 包含 RecordId 的字典
+    :return: 一个字典，键为 RecordId，值为对应的 IP 地址。
+    """
+    ips_dict = {}
+    for key, record_id in record_ids.items():
+        try:
+            request = DescribeDomainRecordInfoRequest()
+            request.set_RecordId(record_id)
+            response = client.do_action_with_exception(request)
+            current_ip = json.loads(response)['Value']
+            ips_dict[record_id] = current_ip
+        except Exception as e:
+            logging.info(f"[🚫] 获取RecordId时候出错: {record_id}: {str(e)}")
+            ips_dict[record_id] = None  # 或者选择其他方式来处理错误
+    return ips_dict
+
+aips_dict = get_record_ids_ips(record_ids)
+print(aips_dict)
+
+ 
+
+
+
 
 def update_arecord(record_id, a_domain, new_ip):
     # 先获取当前的A记录的IP地址
     request = DescribeDomainRecordInfoRequest()
     request.set_RecordId(record_id)
     response = client.do_action_with_exception(request)
+    print(response)
     current_ip = json.loads(response)['Value']
     
     # 只有当新的IP地址与当前的IP地址不同时，才更新A记录
@@ -149,8 +195,8 @@ def main():
         else:
             logging.info(f"[🚫] 无法获取子域的IP: {rr_domain}")
 
-if __name__ == '__main__':
-    main()
+#if __name__ == '__main__':
+#    main()
 
 
 

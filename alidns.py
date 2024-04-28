@@ -167,8 +167,7 @@ def find_mismatched_ips(ddnsips_dict, aips_dict):
             source_ip = next((ddns_ip for ddns_ip in sorted_ddns_ips if ddns_ip not in aips_dict.values()), None)
             if source_ip:
                 mismatched_ips[record_id] = source_ip
-            
-    return mismatched_ips
+    return mismatched_ips if mismatched_ips else None
 
 # 打印输出结果
 mismatched_ips_output = find_mismatched_ips(ddnsips_dict, aips_dict)
@@ -177,25 +176,17 @@ print(mismatched_ips_output)
 
 def update_arecord(record_id, a_domain, new_ip):
     # 先获取当前的A记录的IP地址
-    request = DescribeDomainRecordInfoRequest()
+    request = UpdateDomainRecordRequest()
     request.set_RecordId(record_id)
+    request.set_RR(a_domain)
+    request.set_Type('A')
+    request.set_TTL(domain_ttl)  #TTL时间  默认600
+    request.set_Value(new_ip)
+    # 发送请求并打印响应
     response = client.do_action_with_exception(request)
-    print(response)
-    current_ip = json.loads(response)['Value']
-    
-    # 只有当新的IP地址与当前的IP地址不同时，才更新A记录
-    if new_ip != current_ip:
-        request = UpdateDomainRecordRequest()
-        request.set_RecordId(record_id)
-        request.set_RR(a_domain)
-        request.set_Type('A')
-        request.set_TTL(domain_ttl)  #TTL时间  默认600
-        request.set_Value(new_ip)
-        # 发送请求并打印响应
-        response = client.do_action_with_exception(request)
-        logging.info(f"[📥] 发现并更新了子域名 {rr_domain} 的新IP: {new_ip}")
-    else:
-        logging.info(f"[💤] 例行查询子域名 {rr_domain}. IP没有变动 程序自动跳过")
+    logging.info(f"[📥] 发现并更新了子域名 {rr_domain} 的新IP: {new_ip}")
+ 
+    #logging.info(f"[💤] 例行查询子域名 {rr_domain}. IP没有变动 程序自动跳过")
 
 def main():
     global rr_domain

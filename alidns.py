@@ -3,7 +3,7 @@ import re
 import queue
 import sys
 import json
-import random
+from colorama import Fore,Back,Style
 import logging
 from aliyunsdkcore.client import AcsClient
 from aliyunsdkalidns.request.v20150109.DescribeDomainRecordsRequest import DescribeDomainRecordsRequest
@@ -12,7 +12,7 @@ from aliyunsdkalidns.request.v20150109.DescribeDomainRecordInfoRequest import De
 
 
 # 环境安装
-## pip install aliyun-python-sdk-core-v3 aliyun-python-sdk-alidns pyinstaller -i https://pypi.tuna.tsinghua.edu.cn/simple
+## pip install aliyun-python-sdk-core-v3 aliyun-python-sdk-alidns pyinstaller colorama -i https://pypi.tuna.tsinghua.edu.cn/simple
 ## pip install aliyun-python-sdk-alidns -i https://pypi.tuna.tsinghua.edu.cn/simple
 ## pip install pyinstaller  -i https://pypi.tuna.tsinghua.edu.cn/simple
 
@@ -125,8 +125,9 @@ def getips_sdk(rr_domains):
             ips_dict[rr_domain] = None  # 如果未找到记录，设置为 None   
     return ips_dict
 
+# 获得DDNS域名和IP
 ddnsips_dict = getips_sdk(rr_domain)
-print(ddnsips_dict)
+logging.info("[DDNS解析域名]:" + Fore.BLUE + str(ddnsips_dict) + Style.RESET_ALL)
 
 
 def get_record_ids_ips(record_ids):
@@ -149,63 +150,62 @@ def get_record_ids_ips(record_ids):
             ips_dict[record_id] = None  # 或者选择其他方式来处理错误
     return ips_dict
 
+# 获得负载均衡域名RecordId和IP
 aips_dict = get_record_ids_ips(record_ids)
-print(aips_dict)
+logging.info("[负载均衡域名]:" + Fore.BLUE +  str(aips_dict) + Style.RESET_ALL)
 
  
 def find_mismatched_ips(ddnsips_dict, aips_dict):
-    # 将ddnsips_dict中的IP提取出来并排序形成列表
-    sorted_ddns_ips = sorted(ddnsips_dict.values())
+    # 删除aips_dict中值与ddnsips_dict中值匹配的键值对
+    for key, value in list(aips_dict.items()):
+        for ddns_key, ddns_value in list(ddnsips_dict.items()):
+            if value == ddns_value:
+                del aips_dict[key]
+                del ddnsips_dict[ddns_key]
+
+    # 重新组合aips_dict的键与ddnsips_dict的值
+    new_aips_dict = dict(zip(aips_dict.keys(), ddnsips_dict.values()))
+    # 如果有更新则返回字典 无更新则 None
+    return new_aips_dict if new_aips_dict else None
+
+
+def update_arecord(updates_dict, a_domain):
+    """
+    更新A记录的IP地址。
     
-    # 存储不匹配的RecordId和对应的源IP
-    mismatched_ips = {}
-    
-    for record_id, ip in aips_dict.items():
-        # 如果aips_dict中的IP不在ddnsips_dict中，则记录为不匹配
-        if ip not in ddnsips_dict.values():
-            # 选择ddnsips_dict中的第一个不在aips_dict中的IP作为源IP
-            source_ip = next((ddns_ip for ddns_ip in sorted_ddns_ips if ddns_ip not in aips_dict.values()), None)
-            if source_ip:
-                mismatched_ips[record_id] = source_ip
-    return mismatched_ips if mismatched_ips else None
+    :param updates_dict: 包含记录ID和新IP地址的字典
+    :param a_domain: 要更新的子域名
+    """
+    for record_id, new_ip in updates_dict.items():
+        try:
+            request = UpdateDomainRecordRequest()
+            request.set_RecordId(record_id)
+            request.set_RR(a_domain)  # 子域名
+            request.set_Type('A')
+            request.set_TTL(domain_ttl)  # TTL时间，默认600
+            request.set_Value(new_ip)  # 新的IP地址
+            # 发送请求并打印响应
+            response = client.do_action_with_exception(request)
+            #logging.info(f"[📥] 发现并更新了子域名 {a_domain} 的新IP: {new_ip}")
+        except Exception as e:
+            logging.error(f"[❌] 更新子域名 {a_domain} IP时发生错误: {str(e)}")
 
-# 打印输出结果
-mismatched_ips_output = find_mismatched_ips(ddnsips_dict, aips_dict)
-print(mismatched_ips_output)
 
-
-def update_arecord(record_id, a_domain, new_ip):
-    # 先获取当前的A记录的IP地址
-    request = UpdateDomainRecordRequest()
-    request.set_RecordId(record_id)
-    request.set_RR(a_domain)
-    request.set_Type('A')
-    request.set_TTL(domain_ttl)  #TTL时间  默认600
-    request.set_Value(new_ip)
-    # 发送请求并打印响应
-    response = client.do_action_with_exception(request)
-    logging.info(f"[📥] 发现并更新了子域名 {rr_domain} 的新IP: {new_ip}")
- 
-    #logging.info(f"[💤] 例行查询子域名 {rr_domain}. IP没有变动 程序自动跳过")
 
 def main():
-    global rr_domain
-    # 获取每个子域名的IP地址
-    ips = {rr: getip_sdk(rr) for rr in rr_domain}
-    #print(ips)
-    # 更新A记录
-    for rr_domain, ip in ips.items():
-        if ip:
-            record_id = record_ids.get(rr_domain)
-            if record_id:
-                update_arecord(record_id, a_domain, ip)
-            else:
-                logging.info(f"[🚫] 未找到子域的RecordId记录: {rr_domain}")
-        else:
-            logging.info(f"[🚫] 无法获取子域的IP: {rr_domain}")
+    # 比对负载均衡域名的IP和DDNS的IP是否有区别
+    mismatched_ips_output = find_mismatched_ips(ddnsips_dict, aips_dict)
+    #print(mismatched_ips_output)
+    # 打印输出结果
+    if mismatched_ips_output:
+        update_arecord(mismatched_ips_output, a_domain)
+        logging.info(f"[📥]  " + Back.YELLOW + f"发现新IP 更新了子域名{a_domain}.{domain_name}: {mismatched_ips_output}" + Style.RESET_ALL)
+    else:
+        logging.info(f"[💤] " + Fore.GREEN + "例行查询负载均衡子域名 IP没有变动 程序自动跳过" + Style.RESET_ALL)
 
-#if __name__ == '__main__':
-#    main()
+
+if __name__ == '__main__':
+    main()
 
 
 

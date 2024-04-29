@@ -33,7 +33,7 @@ ENV CRON_LOG_LEVEL=error
 # 拷源二进制到目录
 COPY --from=builder /build/dist/alidns .
 
-# 在这里下载 https://github.com/aptible/supercronic/releases
+# 在这里下载 https://github.com/aptible/supercronic/releases 考虑到国内网络环境 不使用ADD了
 # 使用ADD命令直接下载supercronic，并赋予执行权限
 COPY supercronic-linux-amd64 /usr/local/bin/supercronic
 RUN chmod +x /usr/local/bin/supercronic && chmod +x /app/alidns

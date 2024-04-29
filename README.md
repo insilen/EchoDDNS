@@ -24,7 +24,7 @@
 
 支持设置的域名(开发计划)
 
-- [*] 阿里云解析
+- [x] 阿里云解析
 - [ ] 腾讯云DNSpod
 - [ ] 3322.org
 - [ ] oray.com
@@ -33,14 +33,14 @@
 - [ ] 自由模式(自定义DNS查询)
 
 支持的运行的环境
-- [*] Linux/Win/macOS AMD64/ARM64 Python3
-- [*] Docker Cli/Docker Compose
+- [x] Linux/Win/macOS AMD64/ARM64 Python3
+- [x] Docker Cli/Docker Compose
 
 
 ## 原理流程图
 
 <p align="center">
-  <img src="./doc/assets/EchoDDNS.excalidraw.svg" width="90%" alt="项目 Logo">
+  <img src="./doc/assets/EchoDDNS.excalidraw.svg" width="600" alt="项目 Logo">
 </p>
 
 
@@ -122,7 +122,6 @@ a.dns.example.com 10.0.0.30
 完整配置请参考项目中`Docker-compose.yml` 或 Dockerhub中说明
 
 
-
 ### Dockerfile 构建指南
 ```
 # 使用名为all-builder的构建器实例
@@ -159,3 +158,58 @@ docker buildx build --platform linux/amd64,linux/arm64 -t insilen/aliddnstoa:lat
    # 退出虚拟环境
    deactivate
 ```
+
+
+
+## 功能实现测试
+在RDP中 HA高可用效果：
+```
+a.dns.example.com A记录使用了下方3个DDNS域名的IP
+dns1.example.com  221.xxx.57.151
+dns2.example.com  221.xxx.81.221
+dns3.example.com  221.xxx.81.187
+```
+
+```
+# 3个出口均开启3389端口
+# 第一次测试
+~ # telnet home.example.com 3389
+Trying 221.xxx.81.187...
+Connected to a.dns.example.com.
+Escape character is '^]'.
+
+# 3个出口均开启3389端口
+# 第二次测试
+~ # telnet home.example.com 3389
+Trying 221.xxx.81.187...
+Connected to a.dns.example.com.
+Escape character is '^]'.
+
+
+
+# 此时只开启dns3出口的 3389端口
+# 第一次测试
+~ # telnet home.example.com 3389
+Trying 221.xxx.57.151...
+Trying 221.xxx.81.187...
+Connected to home.example.com.
+Escape character is '^]'.
+
+# 此时只开启dns3出口的 3389端口
+# 第二次测试
+~ # telnet home.example.com 3389
+Trying 221.xxx.57.151...
+Trying 221.xxx.81.221...
+Trying 221.xxx.81.187...
+Connected to home.example.com.
+Escape character is '^]'.
+
+# 此时只开启dns2出口的 3389端口
+~ # telnet home.example.com 3389
+Trying 221.xxx.57.151...
+Trying 221.xxx.81.221...
+Connected to home.example.com.
+Escape character is '^]'.
+```
+
+在实际中 使用RDP客户端连接 在重拨、依次切换IP时候，可用性有非常大的改善
